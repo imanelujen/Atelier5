@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Salles</title>
+</head>
+<body>
+    <h2>Ajouter / Modifier une salle</h2>
+    <input type="hidden" id="roomId">
+    <input type="text" id="name" placeholder="Nom de la salle">
+    <input type="number" id="capacity" placeholder="Capacité">
+    <button onclick="createOrUpdateRoom()">Sauvegarder</button>
+
+<h3>Liste des Salles</h3>
+<ul id="roomList"></ul>
+<script>
+const apiUrl = 'http://127.0.0.1:8000/api/rooms';
+function createOrUpdateRoom() {
+    const id = document.getElementById('roomId').value;
+    const name = document.getElementById('name').value;
+    const capacity = document.getElementById('capacity').value;
+
+    const room = { name, capacity };
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${apiUrl}/${id}` : apiUrl;
+
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(room)
+    })
+    .then(response => response.text()) // Utilise `.text()` pour lire la réponse brute
+    .then(data => {
+        console.log("Réponse brute :", data);  // Affiche la réponse brute dans la console
+        try {
+            if (data.startsWith('{') || data.startsWith('[')) {
+            const jsonData = JSON.parse(data);  // Essaie de la parser en JSON
+            alert(jsonData.message);  // Affiche le message de la réponse
+        } else {
+            alert("Réponse inattendue : " + data);  // Affiche une alerte si ce n'est pas du JSON
+        }
+            loadRooms();  // Recharger la liste après sauvegarde
+            resetRoom();
+        } catch (error) {
+            console.error("Erreur lors du parsing JSON :", error);
+        }
+    })
+    .catch(error => {
+        console.error("Erreur :", error);
+    });
+}
+
+    function editRoom(room) {
+document.getElementById('roomId').value=room.id;
+document.getElementById('name').value=room.name;
+document.getElementById('capacity').value=room.capacity;
+    }
+
+    function loadRooms(){
+
+    fetch(apiUrl)
+    .then(res =>res.json())
+    .then(rooms =>{
+const list=document.getElementById('roomList');
+list.innerHTML = '';
+
+rooms.forEach(room => {
+    const li = document.createElement('li');
+    li.innerHTML=`
+  ${room.name} (${room.capacity} places)
+  <button  onclick='editRoom(${JSON.stringify(room)})'>Edit</button>
+   <button onclick='deleteRoom(${room.id})'>delete</button>
+    `;
+    list.appendChild(li);
+});
+    })
+    .catch(error => {console.error("Erreur lors du chargement des salles :", error);
+});
+}
+
+    function resetRoom() {
+document.getElementById('roomId').value='';
+document.getElementById('name').value='';
+document.getElementById('capacity').value='';
+    }
+
+    function deleteRoom(id) {
+            fetch(`${apiUrl}/${id}`, { method: 'DELETE' })
+                .then(() => loadRooms())
+                .catch(error => console.error("Erreur lors de la suppression :", error));
+        }
+
+        window.onload = loadRooms;
+</script>
+</body>
+</html>

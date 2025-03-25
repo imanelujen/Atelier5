@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Files</title>
+</head>
+<body>
+    <h2>Uploader un fichier</h2>
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">Upload</button>
+    <h3>fichier diponible : </h3>
+    <ul id="fileList"></ul>
+    <script>
+        async function uploadFile() {
+const input=document.getElementById('fileInput');
+const file =input.files[0];
+console.log("Fichier selected :",file);
+if(!file){
+    alert('veuillez selectionner un fichier.');
+    return ;
+}
+
+const formData = new FormData();
+formData.append('file', file);
+
+try{
+    const response = await fetch('/api/upload',{
+        method: 'POST',
+        body: formData
+
+});
+
+        const data = await response.json();
+        console.log("Réponse API :", data);
+                alert(data.message);
+                await loadFiles();
+            } catch (error) {
+                console.error('Erreur lors de l’upload :', error);
+            }
+        }
+      //files
+      async function loadFiles(){
+        try{
+            const response= await fetch('/api/files',
+                {method:'Get'}
+            );
+            const files= await response.json();
+            const list= document.getElementById('fileList');
+            list.innerHTML ='';
+            files.forEach(url => {
+             const li = document.createElement('li');
+            const link = document.createElement('a');
+
+            link.href =url;
+            link.innerText=url;
+            link.target= '_blank';
+            li.appendChild(link);
+            list.appendChild(li);
+            });
+        }catch(error){
+            console.error('Erreur lors telechargemnt des fichiers :',error);
+        }
+      }
+
+
+      window.onload=loadFiles;
+
+
+//ou apres on peut utliser : de Promise avec fetch POST
+    //   fetch('/api/upload', {
+    //             method: 'POST',
+    //             body: formData
+    //         })
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             alert(data.message);
+    //             return loadFiles(); // Recharger la liste après upload
+    //         })
+    //         .catch(error => {
+    //             console.error("Erreur lors du téléchargement :", error);
+    //         });
+    //     }
+    </script>
+</body>
+</html>
